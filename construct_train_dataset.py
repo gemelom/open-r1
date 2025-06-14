@@ -1,5 +1,5 @@
 import json
-from datasets import Dataset
+from datasets import Dataset, Features, Value
 from huggingface_hub import HfApi
 
 # Load the JSON data
@@ -16,17 +16,21 @@ for item in data:
     }
     examples.append(example)
 
+# Define features
+features = Features(
+    {
+        "question": Value("string"),
+        "ground_truth": Value("string"),
+        "distribution": Value("string"),
+    }
+)
+
 # Create Hugging Face dataset
-dataset = Dataset.from_list(examples)
+dataset = Dataset.from_list(examples, features=features)
 
 # Add dataset metadata
 dataset.info.description = "A dataset for trajectory prediction tasks"
 dataset.info.license = "MIT"
-dataset.info.features = {
-    "question": "string",
-    "ground_truth": "string",
-    "distribution": "string",
-}
 
 # Push to Hugging Face
 api = HfApi()
