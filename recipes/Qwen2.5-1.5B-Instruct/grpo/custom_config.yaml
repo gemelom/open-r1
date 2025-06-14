@@ -6,7 +6,7 @@ attn_implementation: flash_attention_2
 
 # Data training arguments
 dataset_name: gemelom/trajectory-prediction-v1
-dataset_prompt_column: problem
+dataset_prompt_column: question
 system_prompt: "You are a helpful AI Assistant that provides well-reasoned and detailed responses. You first think about the reasoning process as an internal monologue and then provide the user with the answer. Respond in the following format: <think>\n...\n</think>\n<answer>\n...\n</answer>"
 
 # GRPO trainer config
