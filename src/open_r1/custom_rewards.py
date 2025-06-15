@@ -62,40 +62,33 @@ def accuracy_reward(
         except (ValueError, IndexError):
             return None
 
+    def extract_coordinates(text: str) -> list:
+        # Use regex to extract all (x,y) pairs
+        return re.findall(r"\([^()]+,[^()]+\)", text)
+
     def validate_model_output(text: str) -> bool:
-        # Check if text is wrapped in {}
+        text = text.strip()
         if not (text.startswith("{") and text.endswith("}")):
             return False
-
-        # Remove {} and split by comma
-        coords = text[1:-1].split(",")
-
-        # Check if we have exactly 10 coordinates
+        coords = extract_coordinates(text)
         if len(coords) != 10:
             return False
-
-        # Check if each coordinate is a valid 2D coordinate
         for coord in coords:
             if parse_coordinate(coord) is None:
                 return False
         return True
 
     def validate_ground_truth(text: str) -> bool:
-        # Split by comma
-        coords = text.split(",")
-
-        # Check if we have exactly 10 coordinates
+        coords = extract_coordinates(text)
         if len(coords) != 10:
             return False
-
-        # Check if each coordinate is a valid 2D coordinate
         for coord in coords:
             if parse_coordinate(coord) is None:
                 return False
         return True
 
     def is_close(
-        a: float, b: float, rel_tol: float = 0.0001, abs_tol: float = 0.01
+        a: float, b: float, rel_tol: float = 1e-5, abs_tol: float = 1e-2
     ) -> bool:
         """Check if two floats are close to each other within the given tolerance."""
         return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
@@ -112,6 +105,7 @@ def accuracy_reward(
 
         # Extract answer from content
         answer = extract_answer(content)
+        print("answer:", answer)
         if answer is None:
             rewards.append(0)
             continue
@@ -125,9 +119,9 @@ def accuracy_reward(
         try:
             # Parse coordinates into list of (x,y) tuples
             answer_coords = [
-                parse_coordinate(coord) for coord in answer[1:-1].split(",")
+                parse_coordinate(coord) for coord in extract_coordinates(answer)
             ]
-            sol_coords = [parse_coordinate(coord) for coord in sol.split(",")]
+            sol_coords = [parse_coordinate(coord) for coord in extract_coordinates(sol)]
 
             # Count correct coordinates
             correct_count = sum(
