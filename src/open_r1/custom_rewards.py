@@ -113,12 +113,12 @@ def accuracy_reward(
         # Extract answer from content
         answer = extract_answer(content)
         if answer is None:
-            rewards.append(None)
+            rewards.append(0)
             continue
 
         # Validate format of answer and solution
         if not validate_model_output(answer) or not validate_ground_truth(sol):
-            rewards.append(None)
+            rewards.append(0)
             continue
 
         # Compare the coordinates
@@ -142,7 +142,7 @@ def accuracy_reward(
             rewards.append(reward)
         except Exception as e:
             print(f"Error comparing coordinates: {e}")
-            rewards.append(None)
+            rewards.append(0)
 
     return rewards
 
