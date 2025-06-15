@@ -1,3 +1,4 @@
+HF_HUB_ENABLE_HF_TRANSFER=0 \
 WANDB_MODE=offline \
 ACCELERATE_LOG_LEVEL=info \
     accelerate launch --config_file recipes/accelerate_configs/custom_zero3.yaml \
