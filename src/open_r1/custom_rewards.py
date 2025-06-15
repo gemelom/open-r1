@@ -105,7 +105,8 @@ def accuracy_reward(
 
         # Extract answer from content
         answer = extract_answer(content)
-        print("answer:", answer)
+        # print("answer:", answer)
+        # print("sol:", sol)
         if answer is None:
             rewards.append(0)
             continue
