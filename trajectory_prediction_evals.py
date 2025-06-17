@@ -34,7 +34,7 @@ from typing import Optional
 
 import numpy as np
 
-from lighteval.metrics.metrics import SampleLevelMetric
+from lighteval.metrics.metrics import SampleLevelMetric, SampleLevelMetricGrouping
 from lighteval.metrics.utils.metric_utils import MetricCategory, MetricUseCase
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc
@@ -68,7 +68,9 @@ def prompt_fn(line, task_name: str = None):
     )
 
 
-def accuracy_reward_metric(predictions: list[str], formatted_doc: Doc, **kwargs) -> dict:
+def accuracy_reward_metric(
+    predictions: list[str], formatted_doc: Doc, **kwargs
+) -> dict:
     def extract_answer(content: str) -> Optional[str]:
         # Extract content between <answer></answer> tags
         pattern = r"<answer>\n(.*?)\n</answer>"
@@ -115,32 +117,48 @@ def accuracy_reward_metric(predictions: list[str], formatted_doc: Doc, **kwargs)
                 return False
         return True
 
-    def is_close(a: float, b: float, rel_tol: float = 1e-5, abs_tol: float = 1e-2) -> bool:
+    def is_close(
+        a: float, b: float, rel_tol: float = 1e-5, abs_tol: float = 1e-2
+    ) -> bool:
         """Check if two floats are close to each other within the given tolerance."""
         return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
-    def compare_coordinates(coord1: tuple[float, float], coord2: tuple[float, float]) -> bool:
+    def compare_coordinates(
+        coord1: tuple[float, float], coord2: tuple[float, float]
+    ) -> bool:
         """Compare two coordinates with tolerance."""
         return is_close(coord1[0], coord2[0]) and is_close(coord1[1], coord2[1])
 
     response = predictions[0]
     answer = extract_answer(response)
 
+    print("response", response)
+    print("answer", answer)
+
     if answer is None:
         return {"accuracy": False, "score": 0}
 
     # Validate format of answer and solution
-    if not validate_model_output(answer) or not validate_ground_truth(formatted_doc.choices[0]):
+    if not validate_model_output(answer) or not validate_ground_truth(
+        formatted_doc.choices[0]
+    ):
         return {"accuracy": False, "score": 0}
 
     # Compare the coordinates
     try:
         # Parse coordinates into list of (x,y) tuples
-        answer_coords = [parse_coordinate(coord) for coord in extract_coordinates(answer)]
-        sol_coords = [parse_coordinate(coord) for coord in extract_coordinates(formatted_doc.choices[0])]
+        answer_coords = [
+            parse_coordinate(coord) for coord in extract_coordinates(answer)
+        ]
+        sol_coords = [
+            parse_coordinate(coord)
+            for coord in extract_coordinates(formatted_doc.choices[0])
+        ]
 
         # Count correct coordinates
-        correct_count = sum(1 for a, s in zip(answer_coords, sol_coords) if compare_coordinates(a, s))
+        correct_count = sum(
+            1 for a, s in zip(answer_coords, sol_coords) if compare_coordinates(a, s)
+        )
 
         # Calculate reward based on the number of correct coordinates
         # Each correct coordinate contributes 0.1 to the reward
@@ -151,11 +169,11 @@ def accuracy_reward_metric(predictions: list[str], formatted_doc: Doc, **kwargs)
     return {"accuracy": reward == 1, "score": reward}
 
 
-trajectory_prediction_evals = SampleLevelMetric(
+trajectory_prediction_evals = SampleLevelMetricGrouping(
     metric_name="trajectory_prediction_evals",
     higher_is_better=True,
-    category=MetricCategory.IGNORED,
-    use_case=MetricUseCase.NONE,
+    category=MetricCategory.GENERATIVE,
+    use_case=MetricUseCase.ACCURACY,
     sample_level_fn=accuracy_reward_metric,
     corpus_level_fn={"accuracy": np.mean, "score": np.mean},
 )
@@ -164,12 +182,12 @@ task = LightevalTaskConfig(
     name="trajectory_prediction_evals",
     prompt_function=prompt_fn,
     suite=["community"],
-    hf_repo="gemelom/trajectory_prediction_v1",
-    hf_subset="train",
+    hf_repo="gemelom/trajectory-prediction-v1",
+    hf_subset="default",
     hf_avail_splits=["train"],
     evaluation_splits=["train"],
-    few_shots_split="",
-    few_shots_select="",
+    few_shots_split=None,
+    few_shots_select=None,
     metric=[trajectory_prediction_evals],
 )
 

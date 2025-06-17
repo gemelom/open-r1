@@ -1,4 +1,5 @@
+HF_HUB_ENABLE_HF_TRANSFER=0 \
 lighteval accelerate \
-    "model_name=Qwen/Qwen2.5-1.5B-Instruct" \
+    "vllm_eval_config.yaml" \
     "community|trajectory_prediction_evals|0|0" \
-    --custom-tasks trajectory_prediction_evals.py
+    --custom-tasks trajectory_prediction_evals.py \
